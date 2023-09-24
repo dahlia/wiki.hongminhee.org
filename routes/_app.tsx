@@ -25,6 +25,7 @@ export async function getSite(): Promise<Site> {
 
 export default async function App(_: Request, { Component }: AppContext) {
   const site = await getSite();
+  const { plausibleDomain } = getConfig();
   return (
     <html lang="ko">
       <head>
@@ -32,6 +33,15 @@ export default async function App(_: Request, { Component }: AppContext) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{site.siteName}</title>
         <link rel="stylesheet" href={asset("style.css")} />
+        {plausibleDomain &&
+          (
+            <script
+              defer
+              data-domain={plausibleDomain}
+              src="https://plausible.io/js/script.js"
+            >
+            </script>
+          )}
       </head>
       <body>
         <Component />
