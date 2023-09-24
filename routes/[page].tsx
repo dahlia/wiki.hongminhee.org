@@ -94,7 +94,7 @@ const mdObsidian = new Plugin(
   },
 );
 
-const md = new MarkdownIt()
+const md = new MarkdownIt({ breaks: true, linkify: true })
   .use(mdObsidian)
   .use(mdFootnote)
   .use(mdFrontMatter, (fm: unknown) => void (0));
