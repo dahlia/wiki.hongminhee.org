@@ -55,6 +55,7 @@ html {
 body {
   background-color: var(--document-background-color);
   color: var(--document-text-color);
+  font-family: sans-serif;
 }
 
 a {
