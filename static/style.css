@@ -1,6 +1,6 @@
 @import url(https://necolas.github.io/normalize.css/8.0.1/normalize.css);
 @import url(https://cdn.jsdelivr.net/gh/yeun/open-color@v1.9.1/open-color.css);
-@import url(https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&display=swap);
+@import url(https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap);
 
 :root {
   --document-background-color: var(--oc-gray-0);
@@ -20,6 +20,7 @@
   --sidebar-width: 250px;
   --topbar-height: 68px;
   --topbar-padding: 15px;
+  --content-max-width: 800px;
   --link-underline-offset: 0.2rem;
 }
 
@@ -75,7 +76,8 @@ a:visited:hover {
 }
 
 header .site-name {
-  font-family: 'Noto Serif KR', serif;
+  font-family: 'Noto Serif CJK TC', 'Noto Serif CJK HK', 'Noto Serif CJK JP',
+               'Noto Serif TC', serif;
   font-weight: 900;
   font-size: xx-large;
   margin: 0;
@@ -86,11 +88,26 @@ header .site-name {
     left: 0;
     top: 0;
     width: var(--sidebar-width);
+    height: var(--topbar-height);
     padding: var(--topbar-padding);
     background-color: var(--site-name-background-color);
     color: var(--site-name-color);
     text-align: right;
     text-decoration: none;
+
+    &:hover {
+      color: var(--document-text-color);
+    }
+  }
+
+  /* Depends on --sidebar-width: 250px */
+  @media (max-width: calc(250px * 2.5)) {
+    font-size: x-large;
+    > a {
+      width: calc(var(--sidebar-width) * 0.5);
+      height: calc(var(--topbar-height) * 0.75);
+      padding: calc(var(--topbar-padding) * 0.75);
+    }
   }
 }
 
@@ -104,13 +121,34 @@ article > h1 {
     left: var(--sidebar-width);
     right: 0;
     top: 0;
+    width: calc(100% - var(--sidebar-width));
     height: var(--topbar-height);
     padding: var(--topbar-padding) 0 0 var(--topbar-padding);
     border-bottom: 1px solid var(--topbar-border-color);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: xx-large;
     color: var(--document-text-color);
     &:visited { color: var(--document-text-color); }
     text-decoration: none;
+
+    &:hover {
+      color: var(--document-text-color);
+    }
+
+    /* Depends on --sidebar-width: 250px */
+    @media (max-width: calc(250px * 2.5)) {
+      left: calc(var(--sidebar-width) * 0.5);
+      width: calc(100% - var(--sidebar-width) * 0.5);
+      height: calc(var(--topbar-height) * 0.75);
+      padding:
+        calc(var(--topbar-padding) * 0.75)
+        0
+        0
+        calc(var(--topbar-padding) * 0.75);
+      font-size: x-large;
+    }
   }
 }
 
@@ -119,6 +157,7 @@ article > .content {
   position: absolute;
   left: var(--sidebar-width);
   top: var(--topbar-height);
+  max-width: var(--content-max-width);
   padding: var(--topbar-padding);
 
   > :first-child {
@@ -127,6 +166,12 @@ article > .content {
 
   > :last-child {
     margin-bottom: 0;
+  }
+
+  /* Depends on --sidebar-width: 250px */
+  @media (max-width: calc(250px * 2.5)) {
+    position: static;
+    margin-top: calc(var(--topbar-height) * 0.75);
   }
 }
 
@@ -153,9 +198,32 @@ footer > nav > ul {
       text-overflow: ellipsis;
     }
   }
+
+  /* Depends on --sidebar-width: 250px */
+  @media (max-width: calc(250px * 2.5)) {
+    position: static;
+    width: 100%;
+    padding: var(--topbar-padding);
+    border-top: 1px solid var(--sidebar-border-color);
+    border-right: none;
+    line-height: 1.8;
+
+    > li {
+      display: inline;
+
+      > a, strong {
+        display: inline;
+        padding: 0;
+        margin-right: 1.5rem;
+        border: none;
+      }
+    }
+  }
 }
 
 article > .content {
+  line-height: 1.8;
+
   a {
     background-position: center right;
     background-position-y: center;
