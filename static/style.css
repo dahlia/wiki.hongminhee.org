@@ -196,6 +196,9 @@ footer > nav > ul {
       width: var(--sidebar-width);
       padding: var(--topbar-padding);
       border-bottom: 1px solid var(--sidebar-border-color);
+      text-align: right;
+      overflow: hidden;
+      white-space: nowrap;
       text-overflow: ellipsis;
     }
   }
