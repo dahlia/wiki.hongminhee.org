@@ -1,6 +1,7 @@
 import { escape } from "$std/html/mod.ts";
 import { toHashString } from "$std/crypto/to_hash_string.ts";
 import { Handlers, PageProps } from "$fresh/server.ts";
+import { Head } from "$fresh/runtime.ts";
 import { getSite, Site } from "./_app.tsx";
 import MarkdownIt from "npm:markdown-it";
 import mdFootnote from "npm:markdown-it-footnote";
@@ -8,7 +9,8 @@ import mdFrontMatter from "npm:markdown-it-front-matter";
 import { tw } from "twind";
 import { Seonbi } from "https://github.com/dahlia/seonbi/raw/main/scripts/deno/mod.ts";
 import { Plugin } from "../utils/markdown-it-regexp.ts";
-import { Head } from "$fresh/runtime.ts";
+import { getConfig } from "../utils/config.ts";
+const { siteId, cacheExpiresInMs } = getConfig();
 
 interface Page {
   site: Site;
@@ -37,25 +39,27 @@ interface Link {
 type Pos = [number, number, number, number, number, number];
 
 async function getPages(): Promise<Record<string, PageMeta>> {
+  const { siteId, cacheExpiresInMs } = getConfig();
   const kv = await Deno.openKv();
-  const cacheKey = ["pages", "1bed1be957c214a143314dc6096751aa"];
+  const cacheKey = ["pages", siteId];
   const cache = await kv.get<Record<string, PageMeta>>(cacheKey);
   if (cache.value) return cache.value;
   const response = await fetch(
-    "https://publish-01.obsidian.md/cache/1bed1be957c214a143314dc6096751aa",
+    `https://publish-01.obsidian.md/cache/${siteId}`,
   );
   const data = await response.json();
   const filtered = Object.entries(data)
     .filter(([page]) => page.match(/\.md$/i))
     .map(([page, meta]) => [page.slice(0, -3), meta]);
   const pages = Object.fromEntries(filtered);
-  await kv.set(cacheKey, pages, { expireIn: 600_000 });
+  await kv.set(cacheKey, pages, { expireIn: cacheExpiresInMs });
   return pages;
 }
 
 async function getPageBody(page: string): Promise<string | null> {
+  const { siteId } = getConfig();
   const response = await fetch(
-    `https://publish-01.obsidian.md/access/1bed1be957c214a143314dc6096751aa/${
+    `https://publish-01.obsidian.md/access/${siteId}/${
       encodeURIComponent(page)
     }.md`,
   );
@@ -70,7 +74,8 @@ const mdObsidian = new Plugin(
     const href = encodeURIComponent(page) + (anchor ? `#${anchor}` : "");
     if (match[1]) {
       // image
-      return `<img src="https://publish-01.obsidian.md/access/1bed1be957c214a143314dc6096751aa/${
+      const { siteId } = getConfig();
+      return `<img src="https://publish-01.obsidian.md/access/${siteId}/${
         escape(href)
       }" alt="${escape(match[3] ?? match[2])}">`;
     } else {
@@ -157,6 +162,7 @@ async function renderBodyHtml(
   body: string,
   pages: Record<string, PageMeta>,
 ): Promise<string> {
+  const { cacheExpiresInMs, seonbiApiUrl } = getConfig();
   const kv = await Deno.openKv();
   const hash = await crypto.subtle.digest(
     "SHA-256",
@@ -171,7 +177,7 @@ async function renderBodyHtml(
   if (cache.value) return cache.value;
 
   const mdHtml = md.render(body, { pages });
-  const seonbi = new Seonbi({ apiUrl: "https://seonbi.fly.dev/" });
+  const seonbi = new Seonbi({ apiUrl: seonbiApiUrl });
   const seonbiHtml = await seonbi.transform(mdHtml, {
     arrow: null,
     cite: null,
@@ -194,7 +200,7 @@ async function renderBodyHtml(
     /<!\[CDATA\[.*?\]\]>/g,
     (m: string) => m.slice(9, -3),
   );
-  await kv.set(cacheKey, cdataStripped, { expireIn: 600_000 });
+  await kv.set(cacheKey, cdataStripped, { expireIn: cacheExpiresInMs });
   return cdataStripped;
 }
 

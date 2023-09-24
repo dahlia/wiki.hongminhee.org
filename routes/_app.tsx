@@ -1,4 +1,5 @@
 import { AppContext } from "$fresh/server.ts";
+import { getConfig } from "../utils/config.ts";
 
 export interface Site {
   siteName: string;
@@ -8,22 +9,23 @@ export interface Site {
 }
 
 export async function getSite(): Promise<Site> {
+  const { siteId, cacheExpiresInMs } = getConfig();
   const kv = await Deno.openKv();
-  const cacheKey = ["site", "1bed1be957c214a143314dc6096751aa"];
+  const cacheKey = ["site", siteId];
   const cache = await kv.get<Site>(cacheKey);
   if (cache.value) return cache.value;
   const response = await fetch(
-    "https://publish-01.obsidian.md/options/1bed1be957c214a143314dc6096751aa",
+    `https://publish-01.obsidian.md/options/${siteId}`,
   );
   const site = await response.json();
-  await kv.set(cacheKey, site, { expireIn: 600_000 });
+  await kv.set(cacheKey, site, { expireIn: cacheExpiresInMs });
   return site;
 }
 
 export default async function App(_: Request, { Component }: AppContext) {
   const site = await getSite();
   return (
-    <html>
+    <html lang="ko">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
