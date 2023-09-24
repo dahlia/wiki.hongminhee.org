@@ -171,6 +171,12 @@ export default function Page(
     <>
       <Head>
         <title>{page} &mdash; {site.siteName}</title>
+        <link rel="canonical" href={permalink.href} />
+        <meta property="og:title" content={page} />
+        <meta property="og:site_name" content={site.siteName} />
+        <meta property="og:url" content={permalink.href} />
+        <meta property="og:type" content="article" />
+        <meta property="og:locale" content="ko" />
       </Head>
       <main>
         <header>
