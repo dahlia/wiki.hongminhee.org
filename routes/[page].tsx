@@ -156,7 +156,15 @@ async function renderBodyHtml(
     /<!\[CDATA\[.*?\]\]>/g,
     (m: string) => m.slice(9, -3),
   );
-  await kv.set(cacheKey, cdataStripped, { expireIn: cacheExpiresInMs });
+  try {
+    await kv.set(cacheKey, cdataStripped, { expireIn: cacheExpiresInMs });
+  } catch (e) {
+    if (e instanceof TypeError && e.message.match(/value too large/i)) {
+      return cdataStripped;
+    }
+
+    throw e;
+  }
   return cdataStripped;
 }
 
