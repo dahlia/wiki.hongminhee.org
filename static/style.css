@@ -1,0 +1,222 @@
+@import url(https://necolas.github.io/normalize.css/8.0.1/normalize.css);
+@import url(https://cdn.jsdelivr.net/gh/yeun/open-color@v1.9.1/open-color.css);
+@import url(https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&display=swap);
+
+:root {
+  --document-background-color: var(--oc-gray-0);
+  --document-text-color: var(--oc-gray-9);
+  --link-color: var(--oc-blue-7);
+  --link-underline-color: var(--oc-blue-2);
+  --link-hover-background-color: var(--oc-blue-0);
+  --visited-link-color: var(--oc-violet-7);
+  --visited-link-underline-color: var(--oc-violet-2);
+  --visited-link-hover-background-color: var(--oc-violet-0);
+  --site-name-color: var(--document-background-color);
+  --site-name-background-color: var(--document-text-color);
+  --sidebar-border-color: var(--oc-gray-2);
+  --topbar-border-color: var(--sidebar-border-color);
+  --ruby-text-color: var(--oc-gray-6);
+
+  --sidebar-width: 250px;
+  --topbar-height: 68px;
+  --topbar-padding: 15px;
+  --link-underline-offset: 0.2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --document-background-color: var(--oc-gray-9);
+    --document-text-color: var(--oc-gray-0);
+    --link-color: var(--oc-blue-3);
+    --link-underline-color: var(--oc-blue-8);
+    --link-hover-background-color: rgb(var(--oc-blue-9-rgb), .3);
+    --visited-link-color: var(--oc-violet-3);
+    --visited-link-underline-color: var(--oc-violet-8);
+    --visited-link-hover-background-color: rgb(var(--oc-violet-9-rgb), .3);
+    --sidebar-border-color: var(--oc-gray-8);
+    --ruby-text-color: var(--oc-gray-5);
+  }
+}
+
+html {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+    
+*, *::before, *::after {
+  box-sizing: inherit;
+  -moz-box-sizing: inherit;
+  -webkit-box-sizing: inherit;
+}
+
+
+body {
+  background-color: var(--document-background-color);
+  color: var(--document-text-color);
+}
+
+a {
+  color: var(--link-color);
+  text-underline-offset: var(--link-underline-offset);
+  text-decoration-color: var(--link-underline-color);
+}
+a:hover {
+  background-color: var(--link-hover-background-color);
+  text-decoration-color: var(--link-color);
+}
+a:visited {
+  color: var(--visited-link-color);
+  text-decoration-color: var(--visited-link-underline-color);
+}
+a:visited:hover {
+  background-color: var(--visited-link-hover-background-color);
+  text-decoration-color: var(--visited-link-color);
+}
+
+header .site-name {
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 900;
+  font-size: xx-large;
+  margin: 0;
+
+  > a {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--sidebar-width);
+    padding: var(--topbar-padding);
+    background-color: var(--site-name-background-color);
+    color: var(--site-name-color);
+    text-align: right;
+    text-decoration: none;
+  }
+}
+
+article > h1 {
+  margin: 0;
+  font-weight: normal;
+
+  > a {
+    display: block;
+    position: absolute;
+    left: var(--sidebar-width);
+    right: 0;
+    top: 0;
+    height: var(--topbar-height);
+    padding: var(--topbar-padding) 0 0 var(--topbar-padding);
+    border-bottom: 1px solid var(--topbar-border-color);
+    font-size: xx-large;
+    color: var(--document-text-color);
+    &:visited { color: var(--document-text-color); }
+    text-decoration: none;
+  }
+}
+
+article > .content {
+  display: block;
+  position: absolute;
+  left: var(--sidebar-width);
+  top: var(--topbar-height);
+  padding: var(--topbar-padding);
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+footer > nav > ul {
+  display: block;
+  list-style: none;
+  position: absolute;
+  left: 0;
+  top: var(--topbar-height);
+  width: var(--sidebar-width);
+  min-height: car(100% - var(--topbar-height));
+  margin: 0;
+  padding: 0;
+  border-right: 1px solid var(--sidebar-border-color);
+
+  > li {
+    display: block;
+
+    > a, strong {
+      display: block;
+      width: var(--sidebar-width);
+      padding: var(--topbar-padding);
+      border-bottom: 1px solid var(--sidebar-border-color);
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+article > .content {
+  a {
+    background-position: center right;
+    background-position-y: center;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(transparent, transparent),
+      url(external.svg);
+    background-size: 13px;
+    padding-right: 16px;
+    background-position-y: 4px;
+  }
+
+  .internal-link, .footnote-ref > a, .footnote-item .footnote-backref {
+    background: none;
+    padding-right: 0;
+  }
+
+  .missing-link {
+    font-style: normal;
+    color: var(--link-color);
+    opacity: .75;
+    cursor: default;
+    text-decoration: underline;
+    text-decoration-color: var(--link-underline-color);
+    text-underline-offset: var(--link-underline-offset);
+    text-decoration-style: dashed;
+  }
+
+  .internal-link, .missing-link {
+    &:before { content: '[['; }
+    &:after { content: ']]'; }
+    &:before, &:after {
+      color: var(--link-underline-color);
+      letter-spacing: -1px;
+    }
+    &:visited:before, &:visited:after {
+      color: var(--visited-link-underline-color);
+    }
+  }
+
+  ruby rt {
+    font-size: x-small;
+    font-weight: normal;
+    color: var(--ruby-text-color);
+    opacity: 1;
+  }
+
+  hr {
+    border: 1px solid var(--topbar-border-color);
+    border-bottom: none;
+  }
+
+  .footnotes > .footnotes-list {
+    font-size: smaller;
+
+    & > li::marker {
+      color:gray;
+      content: '[' counter(list-item) '] ';
+    }
+
+    ruby rt {
+      font-size: x-small;
+    }
+  }
+}

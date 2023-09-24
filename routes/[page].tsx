@@ -6,7 +6,6 @@ import { getSite, Site } from "./_app.tsx";
 import MarkdownIt from "npm:markdown-it";
 import mdFootnote from "npm:markdown-it-footnote";
 import mdFrontMatter from "npm:markdown-it-front-matter";
-import { tw } from "twind";
 import { Seonbi } from "https://github.com/dahlia/seonbi/raw/main/scripts/deno/mod.ts";
 import { Plugin } from "../utils/markdown-it-regexp.ts";
 import { getConfig } from "../utils/config.ts";
@@ -16,6 +15,7 @@ interface Page {
   site: Site;
   page: string;
   body: string;
+  bodyHtml: string;
   pages: Record<string, PageMeta>;
 }
 
@@ -75,18 +75,21 @@ const mdObsidian = new Plugin(
     if (match[1]) {
       // image
       const { siteId } = getConfig();
+      const currentPage = env.currentPage as string;
       return `<img src="https://publish-01.obsidian.md/access/${siteId}/${
-        escape(href)
+        escape(
+          page.startsWith("/") ? href.substring(3) : `${currentPage}/${href}`,
+        )
       }" alt="${escape(match[3] ?? match[2])}">`;
     } else {
       // internal link
       const pages = env.pages as Record<string, PageMeta>;
       if (pages[page]) {
-        return `<a href="${escape(href)}">${escape(match[3] ?? match[2])}</a>`;
+        return `<a href="${escape(href)}" class="internal-link">${
+          escape(match[3] ?? match[2])
+        }</a>`;
       }
-      return `<strong class="${
-        tw("not-italic font-bold !text-gray-500 underline !decoration-dotted")
-      }">${escape(match[3] ?? match[2])}</strong>`;
+      return `<em class="missing-link">${escape(match[3] ?? match[2])}</em>`;
     }
   },
 );
@@ -95,54 +98,6 @@ const md = new MarkdownIt()
   .use(mdObsidian)
   .use(mdFootnote)
   .use(mdFrontMatter, (fm: unknown) => void (0));
-
-const orig_footnote_caption = md.renderer.rules.footnote_caption;
-md.renderer.rules.footnote_caption = (tokens: unknown, idx: number) =>
-  orig_footnote_caption(tokens, idx).slice(1, -1);
-
-const orig_footnote_ref = md.renderer.rules.footnote_ref;
-md.renderer.rules.footnote_ref = (
-  tokens: unknown,
-  idx: number,
-  options: unknown,
-  env: unknown,
-  slf: typeof MarkdownIt,
-) =>
-  orig_footnote_ref(tokens, idx, options, env, slf).replace(
-    /<a href=/,
-    `<a class="${
-      tw(`!no-underline !font-bold hover:bg-gray-800 hover:text-gray-50`)
-    }" href=`,
-  );
-
-md.renderer.rules.footnote_block_open = () =>
-  `<hr class="${tw`footnotes-sep mt-5 w-48`}">
-  <section class="footnotes">
-  <ol class="footnotes-list ${tw`list-style text-sm list-outside marker:text-gray-500`}">`;
-
-const orig_footnote_open = md.renderer.rules.footnote_open;
-md.renderer.rules.footnote_open = (
-  tokens: unknown,
-  idx: number,
-  options: unknown,
-  env: unknown,
-  slf: unknown,
-) =>
-  orig_footnote_open(tokens, idx, options, env, slf).slice(0, -2) +
-  ` ${tw("!pl-0")}">`;
-
-const orig_footnote_anchor = md.renderer.rules.footnote_anchor;
-md.renderer.rules.footnote_anchor = (
-  tokens: unknown,
-  idx: number,
-  options: unknown,
-  env: unknown,
-  slf: unknown,
-) =>
-  orig_footnote_anchor(tokens, idx, options, env, slf).replace(
-    /(\s+class="\s*footnote-backref\s*)(")/,
-    (m: string) => m.slice(0, -1) + ` ${tw("!no-underline !text-gray-500")}"`,
-  );
 
 export const handler: Handlers = {
   async GET(_req, ctx) {
@@ -153,13 +108,14 @@ export const handler: Handlers = {
     if (body === null) return ctx.renderNotFound();
     const site = await sitePromise;
     const pages = await pagesPromise;
-    const bodyHtml = await renderBodyHtml(body, pages);
+    const bodyHtml = await renderBodyHtml(body, ctx.params.page, pages);
     return ctx.render({ site, page: ctx.params.page, body, bodyHtml, pages });
   },
 };
 
 async function renderBodyHtml(
   body: string,
+  currentPage: string,
   pages: Record<string, PageMeta>,
 ): Promise<string> {
   const { cacheExpiresInMs, seonbiApiUrl } = getConfig();
@@ -176,7 +132,7 @@ async function renderBodyHtml(
   const cache = await kv.get<string>(cacheKey);
   if (cache.value) return cache.value;
 
-  const mdHtml = md.render(body, { pages });
+  const mdHtml = md.render(body, { pages, currentPage });
   const seonbi = new Seonbi({ apiUrl: seonbiApiUrl });
   const seonbiHtml = await seonbi.transform(mdHtml, {
     arrow: null,
@@ -216,49 +172,36 @@ export default function Page(
       <Head>
         <title>{page} &mdash; {site.siteName}</title>
       </Head>
-      <div class="w-full flex flex-wrap">
-        <header class="flex-initial flex-col">
-          <p>
-            <a
-              class="flex-initial block px-5 py-5 text-4xl font-bold bg-gray-800 hover:bg-black text-gray-50 hover:text-white"
-              href={homeUrl.href}
-            >
-              {site.siteName}
-            </a>
+      <main>
+        <header>
+          <p class="site-name">
+            <a href={homeUrl.href}>{site.siteName}</a>
           </p>
-          <nav class="flex-auto border-r border-b border-gray-200">
-            <ul class="px-5 py-5">
-              {pageList.map(([page, meta]) => (
+        </header>
+        <article>
+          <h1>
+            <a href={permalink.href}>{page}</a>
+          </h1>
+          <div class="content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+        </article>
+        <footer>
+          <nav>
+            <ul>
+              {pageList.map(([p]) => (
                 <li>
-                  <a
-                    class="block my-1 text-base w-auto hover:text-black truncate hover:underline"
-                    href={new URL(page, homeUrl).href}
-                  >
-                    {page}
-                  </a>
+                  {p === page
+                    ? <strong>{p}</strong>
+                    : (
+                      <a href={new URL(p, homeUrl).href}>
+                        {p}
+                      </a>
+                    )}
                 </li>
               ))}
             </ul>
           </nav>
-        </header>
-        <article class="flex-auto">
-          <h1>
-            <a
-              class="block px-5 py-5 text-4xl border-b border-gray-200 w-auto hover:bg-white text-gray-800 hover:text-black"
-              href={permalink.href}
-            >
-              {page}
-            </a>
-          </h1>
-
-          <div class="px-5 py-5">
-            <div
-              class="prose"
-              dangerouslySetInnerHTML={{ __html: bodyHtml }}
-            />
-          </div>
-        </article>
-      </div>
+        </footer>
+      </main>
     </>
   );
 }
