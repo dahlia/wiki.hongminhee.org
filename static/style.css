@@ -270,6 +270,20 @@ article > .content {
     opacity: 1;
   }
 
+  blockquote {
+    margin: 0;
+    border-left: 3px solid var(--topbar-border-color);
+    padding-left: 1rem;
+  }
+
+  ol, ul {
+    padding-left: 2rem;
+  }
+
+  ul {
+    list-style-type: square;
+  }
+
   hr {
     border: 1px solid var(--topbar-border-color);
     border-bottom: none;
