@@ -230,7 +230,8 @@ footer > nav > ul {
 article > .content {
   line-height: 1.8;
 
-  a {
+  /* a */
+  [href] {
     background-position: center right;
     background-position-y: center;
     background-repeat: no-repeat;
