@@ -16,6 +16,7 @@
   --sidebar-border-color: var(--oc-gray-2);
   --topbar-border-color: var(--sidebar-border-color);
   --ruby-text-color: var(--oc-gray-6);
+  --task-checkbox-border-color: var(--oc-gray-6);
 
   --sidebar-width: 250px;
   --topbar-height: 68px;
@@ -36,6 +37,7 @@
     --visited-link-hover-background-color: rgb(var(--oc-violet-9-rgb), .3);
     --sidebar-border-color: var(--oc-gray-8);
     --ruby-text-color: var(--oc-gray-5);
+    --task-checkbox-border-color: var(--oc-gray-5);
   }
 }
 
@@ -286,6 +288,19 @@ article > .content {
 
   ul {
     list-style-type: square;
+  }
+
+  .contains-task-list {
+    list-style-type: none;
+    padding-left: 1.5rem;
+
+    .task-list-item-checkbox-span {
+      background-color: transparent !important;
+      border: 1px solid var(--task-checkbox-border-color) !important;
+      &.checked > .task-list-item-checkbox-before {
+        border-color: var(--document-text-color) !important;
+      }
+    }
   }
 
   hr {
