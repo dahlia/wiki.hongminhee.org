@@ -98,7 +98,15 @@ const mdObsidian = new Plugin(
 
 const md = new MarkdownIt({ breaks: true, linkify: true, html: true })
   .use(mdObsidian)
-  .use(mdAnchor)
+  .use(mdAnchor, {
+    getTokensText(tokens) {
+      return tokens.map((t) =>
+        t.type.startsWith("regexp-")
+          ? t.meta.match[0].replaceAll(/\[\[|\]\]/g, "")
+          : t.content
+      ).join("");
+    },
+  })
   .use(mdFootnote)
   .use(mdTaskList, { label: true })
   .use(mdFrontMatter, (fm: unknown) => void (0));
