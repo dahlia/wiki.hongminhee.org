@@ -7,6 +7,7 @@ import MarkdownIt from "npm:markdown-it";
 import mdFootnote from "npm:markdown-it-footnote";
 import mdFrontMatter from "npm:markdown-it-front-matter";
 import mdTaskList from "npm:markdown-it-task-list-plus";
+import mdAnchor from "npm:markdown-it-anchor";
 import { Seonbi } from "https://github.com/dahlia/seonbi/raw/main/scripts/deno/mod.ts";
 import { Plugin } from "../utils/markdown-it-regexp.ts";
 import { getConfig } from "../utils/config.ts";
@@ -97,6 +98,7 @@ const mdObsidian = new Plugin(
 
 const md = new MarkdownIt({ breaks: true, linkify: true, html: true })
   .use(mdObsidian)
+  .use(mdAnchor)
   .use(mdFootnote)
   .use(mdTaskList, { label: true })
   .use(mdFrontMatter, (fm: unknown) => void (0));
