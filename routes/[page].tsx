@@ -1,25 +1,16 @@
-import { escape } from "$std/html/mod.ts";
-import { toHashString } from "$std/crypto/to_hash_string.ts";
-import { Handlers, PageProps } from "$fresh/server.ts";
-import { Head } from "$fresh/runtime.ts";
+import { escape } from "@std/html";
+import { encodeHex } from "@std/encoding/hex";
+import { HttpError, page as pageData } from "fresh";
+import { define } from "@/utils.ts";
 import { getSite, Site } from "./_app.tsx";
 import MarkdownIt from "npm:markdown-it";
 import mdFootnote from "npm:markdown-it-footnote";
 import mdFrontMatter from "npm:markdown-it-front-matter";
 import mdTaskList from "npm:markdown-it-task-list-plus";
 import mdAnchor from "npm:markdown-it-anchor";
-import { Seonbi } from "https://github.com/dahlia/seonbi/raw/main/scripts/deno/mod.ts";
-import { Plugin } from "../utils/markdown-it-regexp.ts";
-import { getConfig } from "../utils/config.ts";
-const { siteId, cacheExpiresInMs } = getConfig();
-
-interface Page {
-  site: Site;
-  page: string;
-  body: string;
-  bodyHtml: string;
-  pages: Record<string, PageMeta>;
-}
+import { Seonbi } from "seonbi";
+import { Plugin } from "@/utils/markdown-it-regexp.ts";
+import { getConfig } from "@/utils/config.ts";
 
 interface PageMeta {
   headings: Heading[];
@@ -97,9 +88,12 @@ const mdObsidian = new Plugin(
 );
 
 const md = new MarkdownIt({ breaks: true, linkify: true, html: true })
-  .use(mdObsidian)
+  // deno-lint-ignore no-explicit-any
+  .use(mdObsidian as any)
   .use(mdAnchor, {
-    getTokensText(tokens) {
+    getTokensText(
+      tokens: { type: string; meta: { match: RegExpExecArray }; content: string }[],
+    ) {
       return tokens.map((t) =>
         t.type.startsWith("regexp-")
           ? t.meta.match[0].replaceAll(/\[\[|\]\]/g, "")
@@ -109,21 +103,28 @@ const md = new MarkdownIt({ breaks: true, linkify: true, html: true })
   })
   .use(mdFootnote)
   .use(mdTaskList, { label: true })
-  .use(mdFrontMatter, (fm: unknown) => void (0));
+  .use(mdFrontMatter, (_fm: unknown) => void 0);
 
-export const handler: Handlers = {
-  async GET(_req, ctx) {
-    const bodyPromise = getPageBody(ctx.params.page);
-    const sitePromise = getSite();
-    const pagesPromise = getPages();
-    const body = await bodyPromise;
-    if (body === null) return ctx.renderNotFound();
-    const site = await sitePromise;
-    const pages = await pagesPromise;
-    const bodyHtml = await renderBodyHtml(body, ctx.params.page, pages);
-    return ctx.render({ site, page: ctx.params.page, body, bodyHtml, pages });
+export const handler = define.handlers({
+  async GET(ctx) {
+    const pageName = ctx.params.page;
+    const [body, site, pages] = await Promise.all([
+      getPageBody(pageName),
+      getSite(),
+      getPages(),
+    ]);
+    if (body === null) throw new HttpError(404);
+    const bodyHtml = await renderBodyHtml(body, pageName, pages);
+
+    const homeUrl = new URL(site.indexFile, ctx.req.url);
+    const permalink = new URL(pageName, homeUrl);
+    ctx.state.title = `${pageName} — ${site.siteName}`;
+    ctx.state.page = pageName;
+    ctx.state.canonicalUrl = permalink.href;
+
+    return pageData({ site, page: pageName, body, bodyHtml, pages });
   },
-};
+});
 
 async function renderBodyHtml(
   body: string,
@@ -136,9 +137,10 @@ async function renderBodyHtml(
     "SHA-256",
     new TextEncoder().encode(body),
   );
+  const hashHex = encodeHex(new Uint8Array(hash));
   const cacheKey = [
     "bodyHtml",
-    toHashString(hash, "base64"),
+    hashHex,
     Deno.env.get("DENO_DEPLOYMENT_ID") ?? Deno.pid,
   ];
   const cache = await kv.get<string>(cacheKey);
@@ -180,54 +182,44 @@ async function renderBodyHtml(
   return cdataStripped;
 }
 
-export default function Page(
-  { url, params, data: { site, page, bodyHtml, pages } }: PageProps<Page>,
-) {
-  const homeUrl = new URL(site.indexFile, url);
-  const permalink = new URL(page, homeUrl);
+export default define.page<typeof handler>((ctx) => {
+  const { site, page, bodyHtml, pages } = ctx.data;
+  const homeUrl = new URL(site.indexFile, ctx.url);
   const pageList = Object.entries(pages);
   pageList.sort(([a], [b]) => a.localeCompare(b));
   return (
-    <>
-      <Head>
-        <title>{page} &mdash; {site.siteName}</title>
-        <link rel="canonical" href={permalink.href} />
-        <meta property="og:title" content={page} />
-        <meta property="og:site_name" content={site.siteName} />
-        <meta property="og:url" content={permalink.href} />
-        <meta property="og:type" content="article" />
-        <meta property="og:locale" content="ko" />
-      </Head>
-      <main>
-        <header>
-          <p class="site-name">
-            <a href={homeUrl.href}>{site.siteName}</a>
-          </p>
-        </header>
-        <article>
-          <h1>
-            <a href={permalink.href}>{page}</a>
-          </h1>
-          <div class="content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
-        </article>
-        <footer>
-          <nav>
-            <ul>
-              {pageList.map(([p]) => (
-                <li>
-                  {p === page
-                    ? <strong>{p}</strong>
-                    : (
-                      <a href={new URL(p, homeUrl).href}>
-                        {p}
-                      </a>
-                    )}
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </footer>
-      </main>
-    </>
+    <main>
+      <header>
+        <p class="site-name">
+          <a href={homeUrl.href}>{site.siteName}</a>
+        </p>
+      </header>
+      <article>
+        <h1>
+          <a href={new URL(page, homeUrl).href}>{page}</a>
+        </h1>
+        <div
+          class="content"
+          dangerouslySetInnerHTML={{ __html: bodyHtml }}
+        />
+      </article>
+      <footer>
+        <nav>
+          <ul>
+            {pageList.map(([p]) => (
+              <li>
+                {p === page
+                  ? <strong>{p}</strong>
+                  : (
+                    <a href={new URL(p, homeUrl).href}>
+                      {p}
+                    </a>
+                  )}
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </footer>
+    </main>
   );
-}
+});

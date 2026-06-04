@@ -1,4 +1,10 @@
-import { MarkdownIt, Token } from "npm:markdown-it";
+import MarkdownIt from "npm:markdown-it";
+
+interface Token {
+  meta: Record<string, unknown>;
+  content: string;
+  type: string;
+}
 
 type Replacer = (
   match: RegExpExecArray,
@@ -28,9 +34,10 @@ export class Plugin {
     this.init(md);
   }
 
-  init(md: typeof MarkdownIt) {
+  init(md: MarkdownIt) {
     md.inline.ruler.push(this.id, this.parse.bind(this));
-    md.renderer.rules[this.id] = this.render.bind(this);
+    // deno-lint-ignore no-explicit-any
+    (md.renderer.rules as any)[this.id] = this.render.bind(this);
   }
 
   parse(state: State, silent: boolean): boolean {
@@ -48,11 +55,11 @@ export class Plugin {
   }
 
   render(
-    tokens: Record<string, Token>,
-    id: string,
+    tokens: Token[],
+    idx: number,
     _: unknown,
     env: Record<string, unknown>,
   ) {
-    return this.replacer(tokens[id].meta.match, env);
+    return this.replacer(tokens[idx].meta["match"] as RegExpExecArray, env);
   }
 }

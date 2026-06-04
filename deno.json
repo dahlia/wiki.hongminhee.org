@@ -1,16 +1,15 @@
 {
   "lock": false,
+  "nodeModulesDir": "auto",
   "tasks": {
-    "check": "deno fmt --check --unstable && deno lint --unstable && deno check --unstable **/*.ts && deno check --unstable **/*.tsx",
-    "start": "deno run --unstable -A --watch=static/,routes/ dev.ts",
-    "build": "deno run --unstable -A dev.ts build",
-    "preview": "deno run --unstable -A main.ts",
-    "update": "deno run --unstable -A -r https://fresh.deno.dev/update ."
+    "dev": "deno run --unstable-kv -A npm:vite",
+    "build": "deno run -A npm:vite build",
+    "start": "deno serve --unstable-kv -A _fresh/server.js",
+    "check": "deno fmt --check && deno lint && deno check **/*.ts **/*.tsx"
   },
   "lint": {
     "rules": {
       "tags": [
-        "fresh",
         "recommended"
       ]
     },
@@ -24,15 +23,19 @@
     ]
   },
   "imports": {
-    "$fresh/": "https://deno.land/x/fresh@1.4.3/",
-    "preact": "https://esm.sh/preact@10.15.1",
-    "preact/": "https://esm.sh/preact@10.15.1/",
-    "preact-render-to-string": "https://esm.sh/*preact-render-to-string@6.2.1",
-    "@preact/signals": "https://esm.sh/*@preact/signals@1.1.3",
-    "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.2.3",
-    "twind": "https://esm.sh/twind@0.16.19",
-    "twind/": "https://esm.sh/twind@0.16.19/",
-    "$std/": "https://deno.land/std@0.193.0/"
+    "@/": "./",
+    "fresh": "jsr:@fresh/core@^2.3.3",
+    "preact": "npm:preact@^10.25.0",
+    "preact/": "npm:preact@^10.25.0/",
+    "preact/jsx-runtime": "npm:preact@^10.25.0/jsx-runtime",
+    "preact/jsx-dev-runtime": "npm:preact@^10.25.0/jsx-dev-runtime",
+    "@std/html": "jsr:@std/html@^1.0.0",
+    "@std/crypto": "jsr:@std/crypto@^1.0.0",
+    "@std/encoding": "jsr:@std/encoding@^1.0.0",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.0",
+    "seonbi": "https://github.com/dahlia/seonbi/raw/main/scripts/deno/mod.ts",
+    "vite": "npm:vite@^7.1.4",
+    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.1.2"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

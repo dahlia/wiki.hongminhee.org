@@ -7,3 +7,6 @@
 
 # Fresh build directory
 _fresh/
+
+# npm compatibility (Deno)
+node_modules/

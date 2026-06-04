@@ -1,6 +1,5 @@
-import { asset } from "$fresh/runtime.ts";
-import { AppContext } from "$fresh/server.ts";
-import { getConfig } from "../utils/config.ts";
+import { define } from "@/utils.ts";
+import { getConfig } from "@/utils/config.ts";
 
 export interface Site {
   siteName: string;
@@ -23,29 +22,41 @@ export async function getSite(): Promise<Site> {
   return site;
 }
 
-export default async function App(_: Request, { Component }: AppContext) {
+export default define.page(async (ctx) => {
   const site = await getSite();
   const { plausibleDomain } = getConfig();
+  const title = ctx.state.title ?? site.siteName;
   return (
     <html lang="ko">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{site.siteName}</title>
-        <link rel="stylesheet" href={asset("style.css")} />
-        {plausibleDomain &&
-          (
-            <script
-              defer
-              data-domain={plausibleDomain}
-              src="https://plausible.io/js/script.js"
-            >
-            </script>
-          )}
+        <title>{title}</title>
+        <link rel="stylesheet" href="/style.css" />
+        {ctx.state.canonicalUrl && (
+          <>
+            <link rel="canonical" href={ctx.state.canonicalUrl} />
+            <meta
+              property="og:title"
+              content={ctx.state.page ?? site.siteName}
+            />
+            <meta property="og:site_name" content={site.siteName} />
+            <meta property="og:url" content={ctx.state.canonicalUrl} />
+            <meta property="og:type" content="article" />
+            <meta property="og:locale" content="ko" />
+          </>
+        )}
+        {plausibleDomain && (
+          <script
+            defer
+            data-domain={plausibleDomain}
+            src="https://plausible.io/js/script.js"
+          />
+        )}
       </head>
       <body>
-        <Component />
+        <ctx.Component />
       </body>
     </html>
   );
-}
+});
