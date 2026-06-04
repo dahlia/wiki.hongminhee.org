@@ -8,9 +8,16 @@ import mdFootnote from "npm:markdown-it-footnote";
 import mdFrontMatter from "npm:markdown-it-front-matter";
 import mdTaskList from "npm:markdown-it-task-list-plus";
 import mdAnchor from "npm:markdown-it-anchor";
-import { Seonbi } from "seonbi";
+import { load, type Gukhanmun } from "@gukhanmun/wasm";
+import { stdictFst } from "@gukhanmun/stdict-fst";
 import { Plugin } from "@/utils/markdown-it-regexp.ts";
 import { getConfig } from "@/utils/config.ts";
+
+const converterPromise: Promise<Gukhanmun> = (async () =>
+  load({
+    dictionaries: [await stdictFst()],
+    rendering: "ruby-on-hanja",
+  }))();
 
 interface PageMeta {
   headings: Heading[];
@@ -131,7 +138,7 @@ async function renderBodyHtml(
   currentPage: string,
   pages: Record<string, PageMeta>,
 ): Promise<string> {
-  const { cacheExpiresInMs, seonbiApiUrl } = getConfig();
+  const { cacheExpiresInMs } = getConfig();
   const kv = await Deno.openKv();
   const hash = await crypto.subtle.digest(
     "SHA-256",
@@ -140,6 +147,7 @@ async function renderBodyHtml(
   const hashHex = encodeHex(new Uint8Array(hash));
   const cacheKey = [
     "bodyHtml",
+    "gukhanmun-0.1",
     hashHex,
     Deno.env.get("DENO_DEPLOYMENT_ID") ?? Deno.pid,
   ];
@@ -147,39 +155,17 @@ async function renderBodyHtml(
   if (cache.value) return cache.value;
 
   const mdHtml = md.render(body, { pages, currentPage });
-  const seonbi = new Seonbi({ apiUrl: seonbiApiUrl });
-  const seonbiHtml = await seonbi.transform(mdHtml, {
-    arrow: null,
-    cite: null,
-    contentType: "text/html",
-    ellipsis: false,
-    emDash: false,
-    hanja: {
-      reading: {
-        dictionary: {},
-        initialSoundLaw: true,
-        useDictionaries: ["kr-stdict"],
-      },
-      rendering: "HanjaInRuby",
-    },
-    quote: null,
-    stop: null,
-  });
-  // FIXME Make Seonbi not to generate CDATA
-  const cdataStripped = seonbiHtml.replaceAll(
-    /<!\[CDATA\[.*?\]\]>/g,
-    (m: string) => m.slice(9, -3),
-  );
+  const converter = await converterPromise;
+  const converted = converter.convert(mdHtml, "html");
   try {
-    await kv.set(cacheKey, cdataStripped, { expireIn: cacheExpiresInMs });
+    await kv.set(cacheKey, converted, { expireIn: cacheExpiresInMs });
   } catch (e) {
     if (e instanceof TypeError && e.message.match(/value too large/i)) {
-      return cdataStripped;
+      return converted;
     }
-
     throw e;
   }
-  return cdataStripped;
+  return converted;
 }
 
 export default define.page<typeof handler>((ctx) => {

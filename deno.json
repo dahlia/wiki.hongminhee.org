@@ -3,7 +3,7 @@
   "nodeModulesDir": "auto",
   "tasks": {
     "dev": "deno run --unstable-kv -A npm:vite",
-    "build": "deno run -A npm:vite build",
+    "build": "deno run -A npm:vite build && deno run -A scripts/fetch_gukhanmun_binaries.ts",
     "start": "deno serve --unstable-kv -A _fresh/server.js",
     "check": "deno fmt --check && deno lint && deno check **/*.ts **/*.tsx"
   },
@@ -33,7 +33,8 @@
     "@std/crypto": "jsr:@std/crypto@^1.0.0",
     "@std/encoding": "jsr:@std/encoding@^1.0.0",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.0",
-    "seonbi": "https://github.com/dahlia/seonbi/raw/main/scripts/deno/mod.ts",
+    "@gukhanmun/wasm": "jsr:@gukhanmun/wasm@^0.1.2",
+    "@gukhanmun/stdict-fst": "jsr:@gukhanmun/stdict-fst@^0.1.2",
     "vite": "npm:vite@^7.1.4",
     "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.1.2"
   },
