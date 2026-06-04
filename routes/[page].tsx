@@ -56,7 +56,7 @@ async function getPageBody(page: string): Promise<string | null> {
       encodeURIComponent(page)
     }.md`,
   );
-  if (!response.ok) return null;
+  if (!response.ok || response.headers.get("etag") === "404") return null;
   return await response.text();
 }
 
