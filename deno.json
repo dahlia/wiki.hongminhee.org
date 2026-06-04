@@ -3,7 +3,7 @@
   "nodeModulesDir": "auto",
   "tasks": {
     "dev": "deno run --unstable-kv -A npm:vite",
-    "build": "deno run -A npm:vite build && deno run -A scripts/fetch_gukhanmun_binaries.ts",
+    "build": "deno run -A npm:vite build",
     "start": "deno serve --unstable-kv -A _fresh/server.js",
     "check": "deno fmt --check && deno lint && deno check **/*.ts **/*.tsx"
   },
