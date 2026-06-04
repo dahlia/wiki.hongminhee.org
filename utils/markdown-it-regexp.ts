@@ -1,4 +1,4 @@
-import MarkdownIt from "npm:markdown-it";
+import MarkdownIt from "markdown-it";
 
 interface Token {
   meta: Record<string, unknown>;

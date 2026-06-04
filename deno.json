@@ -35,6 +35,11 @@
     "@std/dotenv": "jsr:@std/dotenv@^0.225.0",
     "@gukhanmun/wasm": "jsr:@gukhanmun/wasm@^0.1.2",
     "@gukhanmun/stdict-fst": "jsr:@gukhanmun/stdict-fst@^0.1.2",
+    "markdown-it": "npm:markdown-it",
+    "markdown-it-footnote": "npm:markdown-it-footnote",
+    "markdown-it-front-matter": "npm:markdown-it-front-matter",
+    "markdown-it-task-list-plus": "npm:markdown-it-task-list-plus",
+    "markdown-it-anchor": "npm:markdown-it-anchor",
     "vite": "npm:vite@^7.1.4",
     "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.1.2"
   },
